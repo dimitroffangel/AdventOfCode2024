@@ -12,10 +12,9 @@ for line in inputFile:
     lhsList.append(lhs)
     rhsList.append(rhs)
 
-inputFile.close()
-
 lhsList.sort()
 rhsList.sort()
 
-result = [abs(a - b) for a, b in zip(lhsList, rhsList)]
-print(sum(result))
+result = [a - b for a, b in zip(lhsList, rhsList)]
+
+inputFile.close()
