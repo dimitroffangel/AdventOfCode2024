@@ -1,5 +1,6 @@
 import os
 import copy
+import sys
 
 print(os.getcwd())
 
@@ -9,7 +10,7 @@ class Calibration:
         self.operands = operands
 
 
-input_file = open('./day7/input.txt', 'r', encoding='utf-8')
+input_file = open('./day7/example_input.txt', 'r', encoding='utf-8')
 calibrations = []
 
 for line in input_file:
@@ -22,14 +23,26 @@ def concantenate_numbers(lhs_number, rhs_number):
     if rhs_number == 0:
         return lhs_number * 10
 
+    x = lhs_number
+    a = rhs_number
+
     reversed_rhs_number = 0
+    number_of_final_zeroes = 0
+    is_divisible_by_zero = rhs_number % 10 == 0
     while rhs_number != 0:
         reversed_rhs_number = reversed_rhs_number * 10 + rhs_number % 10
+        is_divisible_by_zero = is_divisible_by_zero and rhs_number % 10 == 0
+        if is_divisible_by_zero:
+            number_of_final_zeroes = number_of_final_zeroes + int(rhs_number % 10 == 0)
         rhs_number = rhs_number // 10
+
+    b = reversed_rhs_number
 
     while reversed_rhs_number != 0:
         lhs_number = lhs_number * 10 + reversed_rhs_number % 10
         reversed_rhs_number = reversed_rhs_number // 10
+
+    lhs_number = lhs_number * pow(10, number_of_final_zeroes)
 
     return lhs_number
 
@@ -64,4 +77,4 @@ for calibration in calibrations:
 print(sum_of_calibration_targets)
 print(count)
 
-print()
+# print(concantenate_numbers(105, 206))
