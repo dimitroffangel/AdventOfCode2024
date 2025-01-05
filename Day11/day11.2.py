@@ -13,11 +13,11 @@ class Stone:
         return f'Number: {self.number}, Generation: {self.generation}'
 
 class StoneCache:
-    def __init__(self, number, rhs_list):
-        self.number = number
+    def __init__(self, lhs_list, rhs_list):
+        self.lhs_list = lhs_list
         self.rhs_list = rhs_list
 
-input_file = open('./day11/example_input.txt', 'r', encoding='utf-8')
+input_file = open('./day11/input.txt', 'r', encoding='utf-8')
 
 stone_numbers = []
 
@@ -60,61 +60,60 @@ def try_splitting_number(number):
     else:
         return 0, None
 
-NUMBER_OF_ITERATIONS = 25
+NUMBER_OF_ITERATIONS = 75
 STONE_MULTIPLIER = 2024
 
 cached_result_after_iterations = {}
 
 for stone in stone_numbers:
     initial_stone_number = stone.number
-    if stone.generation >= NUMBER_OF_ITERATIONS:
+    if stone.generation == NUMBER_OF_ITERATIONS:
         continue
 
     if stone.number in cached_result_after_iterations:
         # you have already iterated those generation, add the rhs stones and change the value to the generation that is remaining
-        size_of_cached_result = len(cached_result_after_iterations[stone.number])
-        iterate_until = NUMBER_OF_ITERATIONS - stone.generation \
-            if size_of_cached_result >= NUMBER_OF_ITERATIONS - stone.generation \
-            else size_of_cached_result
-        stone_value_before_change = stone.number
-        for previous_generation_index, previous_stone_number_generation in enumerate(cached_result_after_iterations[stone_value_before_change][:iterate_until]):
-            if len(previous_stone_number_generation) > 1:
-                stone_numbers.append(Stone(previous_stone_number_generation[1], stone.generation + 1))
-            stone.number = previous_stone_number_generation[0]
-            stone.generation += 1
+        size_of_cached_result = len(cached_result_after_iterations[stone.number].lhs_list)
+
+        # everything is already calculated, just get it
+        if size_of_cached_result >= NUMBER_OF_ITERATIONS - stone.generation:
+            lhs_index_taken = NUMBER_OF_ITERATIONS - stone.generation - 1
+            for rhs_stone in cached_result_after_iterations[stone.number].rhs_list:
+                if rhs_stone.generation > lhs_index_taken + 1:
+                    break
+
+                stone_numbers.append(Stone(rhs_stone.number, rhs_stone.generation + stone.generation))
+
+            stone.number = cached_result_after_iterations[stone.number].lhs_list[lhs_index_taken]
+            stone.generation = NUMBER_OF_ITERATIONS
+
+        else:
+            for rhs_stone in cached_result_after_iterations[stone.number].rhs_list:
+                stone_numbers.append(Stone(rhs_stone.number, rhs_stone.generation + stone.generation))
+
+            stone.number = cached_result_after_iterations[stone.number].lhs_list[size_of_cached_result - 1]
+            stone.generation += size_of_cached_result
 
     else:
-        cached_result_after_iterations[stone.number] = []    
-        print(f'Currently {len(stone_numbers)}')
+        cached_result_after_iterations[stone.number] = StoneCache([], [])
     
     for current_generation in range(NUMBER_OF_ITERATIONS - stone.generation):
         if stone.number == 0:
             stone.number = 1
-            cached_result_after_iterations[initial_stone_number].append([1])
+            cached_result_after_iterations[initial_stone_number].lhs_list.append(1)
             continue
 
         lhs, rhs = try_splitting_number(stone.number)
         if rhs is None:
             stone.number *= STONE_MULTIPLIER
-            cached_result_after_iterations[initial_stone_number].append([stone.number])
+            cached_result_after_iterations[initial_stone_number].lhs_list.append(stone.number)
         else:
             stone.number = lhs
             stone_numbers.append(Stone(rhs, stone.generation + current_generation + 1))
-            cached_result_after_iterations[initial_stone_number].append([lhs, rhs])
-
-        # number_of_digits_stone = number_of_digits(stone.number)
-        # if number_of_digits_stone % 2 == 0:
-        #     lhs_number, rhs_number = split_number(stone.number, number_of_digits_stone)
-        #     stone.number = lhs_number
-        #     stone_numbers.append(Stone(rhs_number, stone.generation + current_generation + 1))
-        #     cached_result_after_iterations[initial_stone_number].append([lhs_number, rhs_number])
-
-        # else:
-        #     stone.number = stone.number * STONE_MULTIPLIER
-        #     cached_result_after_iterations[initial_stone_number].append([stone.number])
+            cached_result_after_iterations[initial_stone_number].lhs_list.append(lhs)
+            len_foo = len(cached_result_after_iterations[initial_stone_number].lhs_list)
+            cached_result_after_iterations[initial_stone_number].rhs_list.append(Stone(rhs, len_foo))
     
     stone.generation = NUMBER_OF_ITERATIONS
 
-
-print(stone_numbers)
+# print(stone_numbers)
 print(len(stone_numbers))
