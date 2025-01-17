@@ -33,14 +33,16 @@ def get_plant_region(plant_position, plant_symbol):
     used_plants_for_region[plant_position.y][plant_position.x] = True
 
     while not plants_to_iterate.empty():
-        current_plant = plants_to_iterate.get()
+        current_plant_iteration = plants_to_iterate.get()
 
         for addition_y in range(-1, 2):
             for addition_x in range(-1, 2):
-                if (addition_x == 0 and addition_y == 0):
+                if addition_x == 0 and addition_y == 0:
+                    continue
+                if addition_x != 0 and addition_y != 0:
                     continue
 
-                adjacent_position = Position(current_plant.x + addition_x, current_plant.y + addition_y) 
+                adjacent_position = Position(current_plant_iteration.x + addition_x, current_plant_iteration.y + addition_y) 
                 if adjacent_position.y < 0 or adjacent_position.y >= PLANTS_MAP_ROW_SIZE or \
                     adjacent_position.x < 0 or adjacent_position.x >= PLANTS_MAP_COL_SIZE or \
                     plants_map[adjacent_position.y][adjacent_position.x] != plant_symbol or \
@@ -60,8 +62,8 @@ for y, current_plant_line in enumerate(plants_map):
         if used_plants_for_region[y][x]:
             continue
 
-        plant_position = Position(x, y) 
-        current_plant_region = get_plant_region(plant_position, current_plant_symbol)
+        initial_plant_position = Position(x, y) 
+        current_plant_region = get_plant_region(initial_plant_position, current_plant_symbol)
         plant_regions.append(current_plant_region)
 
 for current_region in plant_regions:
@@ -78,11 +80,11 @@ for current_region in plant_regions:
     current_region_symbol = plants_map[current_region[0].y][current_region[0].x]
     for current_plant_position in current_region:
         area+= 1
-        if current_plant_position.y == 0 or plants_map[current_plant_position.y - 1][current_plant_position.x] != current_region_symbol:
-            perimeter+= 1
+        if current_plant_position.y -1 < 0 or plants_map[current_plant_position.y - 1][current_plant_position.x] != current_region_symbol:
+            perimeter+=1
         if current_plant_position.y + 1 == PLANTS_MAP_ROW_SIZE or plants_map[current_plant_position.y + 1][current_plant_position.x] != current_region_symbol:
             perimeter+=1
-        if current_plant_position.x == 0 or plants_map[current_plant_position.y][current_plant_position.x - 1] != current_region_symbol:
+        if current_plant_position.x -1 < 0 or plants_map[current_plant_position.y][current_plant_position.x - 1] != current_region_symbol:
             perimeter+=1
         if current_plant_position.x + 1 == PLANTS_MAP_COL_SIZE or plants_map[current_plant_position.y][current_plant_position.x + 1] != current_region_symbol:
             perimeter+=1
