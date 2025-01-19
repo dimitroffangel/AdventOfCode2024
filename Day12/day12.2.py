@@ -21,18 +21,22 @@ class Position:
         return f'( {self.y}, {self.x} )' 
 
 class PlantNode:
-    def __init__(self, position, previous_direction):
+    def __init__(self, position, previous_direction, is_lhs_side_marked = False, is_rhs_side_marked = False, is_up_side_marked = False, is_down_side_marked = False):
         self.position = position
         self.previos_direction = previous_direction
+        self.is_rhs_side_marked = is_rhs_side_marked
+        self.is_lhs_side_marked = is_lhs_side_marked
+        self.is_up_side_marked = is_up_side_marked
+        self.is_down_side_marked = is_down_side_marked
 
 class Region:
-    def __init__(self):
-        self.plants = []
-        self.number_of_sides = 0
+    def __init__(self, plants, number_of_sides):
+        self.plants = plants
+        self.number_of_sides = number_of_sides
 
 
 
-input_file = open('./day12/input.txt', 'r', encoding='utf-8')
+input_file = open('./day12/example_input.txt', 'r', encoding='utf-8')
 
 plants_map = []
 used_plants_for_region = []
@@ -56,7 +60,7 @@ def get_plant_region(plant_position, plant_symbol):
     while not plants_to_iterate.empty():
         current_plant_iteration = plants_to_iterate.get()
         current_plant_position = current_plant_iteration.position
-        current_plant_previous_direction = current_plant_iteration.previous_direction
+        current_plant_previous_direction = current_plant_iteration.previos_direction        
 
         for addition_y in range(-1, 2):
             for addition_x in range(-1, 2):
@@ -68,18 +72,22 @@ def get_plant_region(plant_position, plant_symbol):
                 adjacent_position = Position(current_plant_position.x + addition_x, current_plant_position.y + addition_y) 
                 if adjacent_position.y < 0:
                     if current_plant_previous_direction == Direction.UP or current_plant_previous_direction == Direction.NONE:
+                        current_plant_iteration.is_up_side_marked = True
                         number_of_sides+= 1
                     continue
                 if adjacent_position.y >= PLANTS_MAP_ROW_SIZE:
                     if current_plant_previous_direction == Direction.DOWN or current_plant_previous_direction == Direction.NONE:
+                        current_plant_iteration.is_down_side_marked = True
                         number_of_sides+= 1
                     continue
                 if adjacent_position.x < 0:
                     if current_plant_previous_direction == Direction.LEFT or current_plant_previous_direction == Direction.NONE:
+                        current_plant_iteration.is_left_side_marked = True
                         number_of_sides+= 1
                     continue
                 if adjacent_position.x >= PLANTS_MAP_COL_SIZE:
                     if current_plant_previous_direction == Direction.RIGHT or current_plant_previous_direction == Direction.NONE:
+                        current_plant_iteration.is_rhs_side_marked = True
                         number_of_sides+=1
                     continue 
                 
@@ -95,19 +103,76 @@ def get_plant_region(plant_position, plant_symbol):
 
                 if plants_map[adjacent_position.y][adjacent_position.x] != plant_symbol:
                     if current_plant_previous_direction == Direction.NONE:
+                        if current_direction == Direction.UP:
+                            current_plant_iteration.is_up_side_marked = True
+                        if current_direction == Direction.DOWN:
+                            current_plant_iteration.is_down_side_marked = True
+                        if current_direction == Direction.RIGHT:
+                            current_plant_iteration.is_rhs_side_marked = True
+                        if current_direction == Direction.LEFT:
+                            current_plant_iteration.is_left_side_marked = True
+                            
                         number_of_sides+=1
-                    # else:
-                        # if current_direction == Direction.UP and current_plant_previous_direction == Direction.UP:
+                    else:
+                        if current_direction == Direction.UP:
+                            if current_plant_previous_direction == Direction.UP:
+                                number_of_sides+=1
+                            elif (current_plant_previous_direction == Direction.LEFT or current_plant_previous_direction == Direction.RIGHT):
+                                if not current_plant_iteration.is_lhs_side_marked:
+                                    current_plant_iteration.is_lhs_side_marked = True
+                                if not current_plant_iteration.is_rhs_side_marked:
+                                    current_plant_iteration.is_rhs_side_marked = True
+                        if current_direction == Direction.DOWN:
+                            if current_plant_previous_direction == Direction.DOWN:
+                                number_of_sides+=1
+                            elif (current_plant_previous_direction == Direction.LEFT or current_plant_previous_direction == Direction.RIGHT):
+                                if not current_plant_iteration.is_lhs_side_marked:
+                                    current_plant_iteration.is_lhs_side_marked = True
+                                if not current_plant_iteration.is_rhs_side_marked:
+                                    current_plant_iteration.is_rhs_side_marked = True
+                        if current_direction == Direction.LEFT:
+                            if current_plant_previous_direction == Direction.LEFT:
+                                number_of_sides+=1
+                            elif (current_plant_previous_direction == Direction.UP or current_plant_previous_direction == Direction.DOWN):
+                                if not current_plant_iteration.is_up_side_marked:
+                                    current_plant_iteration.is_up_side_marked = True
+                                if not current_plant_iteration.is_down_side_marked:
+                                    current_plant_iteration.is_down_side_marked = True
+                        if current_direction == Direction.RIGHT:
+                            if current_plant_previous_direction == Direction.RIGHT:
+                                number_of_sides+=1
+                            elif (current_plant_previous_direction == Direction.UP or current_plant_previous_direction == Direction.DOWN):
+                                if not current_plant_iteration.is_up_side_marked:
+                                    current_plant_iteration.is_up_side_marked = True
+                                if not current_plant_iteration.is_down_side_marked:
+                                    current_plant_iteration.is_down_side_marked = True
                     continue
 
                 if used_plants_for_region[adjacent_position.y][adjacent_position.x]:
                     continue 
 
+                is_lhs_side_marked = current_plant_iteration.is_lhs_side_marked
+                is_rhs_side_marked = current_plant_iteration.is_rhs_side_marked
+                is_up_side_marked = current_plant_iteration.is_up_side_marked
+                is_down_side_marked = current_plant_iteration.is_down_side_marked
+                if (current_direction == Direction.RIGHT or current_direction == Direction.LEFT) and \
+                    (current_plant_previous_direction == Direction.UP or current_plant_previous_direction == Direction.DOWN):
+                    is_lhs_side_marked = False
+                    is_rhs_side_marked = False
+
+                if  (current_direction == Direction.UP or current_direction == Direction.DOWN) and \
+                    (current_plant_previous_direction == Direction.LEFT or current_plant_previous_direction == Direction.RIGHT):
+                    is_up_side_marked = False
+                    is_down_side_marked = False
+
                 used_plants_for_region[adjacent_position.y][adjacent_position.x] = True
-                plants_to_iterate.put(PlantNode(adjacent_position, current_direction))
+                plants_to_iterate.put(
+                    PlantNode(adjacent_position, current_direction, 
+                              is_lhs_side_marked, is_rhs_side_marked, 
+                              is_up_side_marked, is_down_side_marked))
                 region.append(adjacent_position)
 
-    return region
+    return Region(region, number_of_sides)
 
 plant_regions = []
 
@@ -121,18 +186,16 @@ for y, current_plant_line in enumerate(plants_map):
         plant_regions.append(current_plant_region)
 
 for current_region in plant_regions:
-    print(f'Current plant symbol {plants_map[current_region[0].y][current_region[0].x]} ')
-    for current_plant in current_region:
+    print(f'Current plant symbol {plants_map[current_region.plants[0].y][current_region.plants[0].x]} ')
+    for current_plant in current_region.plants:
         print(current_plant, end = '')
 
     print()
 
 total_price = 0
 for current_region in plant_regions:
-    area = len(current_region)
-    current_region_symbol = plants_map[current_region[0].y][current_region[0].x]
-    
-
+    area = len(current_region.plants)
+    current_region_symbol = plants_map[current_region.plants[0].y][current_region.plants[0].x]
 
     print(f'Symbol: {current_region_symbol}; Area: {area}; Number of sides: {current_region.number_of_sides};')
     total_price += area * current_region.number_of_sides
